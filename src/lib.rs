@@ -78,7 +78,7 @@ pub fn schemafy(tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let root_name = def.root;
     let input_file = def.input_file.value();
     schemafy_lib::Generator::builder()
-        .with_root_name(root_name)
+        .with_root_name_str(&root_name.unwrap())
         .with_input_file(&input_file)
         .build()
         .generate()
