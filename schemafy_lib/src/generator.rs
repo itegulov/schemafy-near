@@ -25,7 +25,6 @@ pub struct Generator<'a, 'b> {
     pub input_file: Option<&'b Path>,
     /// The JSON string to interpret, mutually exclusive with `input_file`
     pub input_json: Option<String>,
-    pub expander: Option<Expander<'a>>,
     pub schema: Option<Schema>,
 }
 
@@ -35,7 +34,7 @@ impl<'a, 'b> Generator<'a, 'b> {
         GeneratorBuilder::default()
     }
 
-    pub fn generate(&'a mut self) -> proc_macro2::TokenStream {
+    pub fn generate(&'a mut self) -> (proc_macro2::TokenStream, Expander<'a>) {
         let json = if let Some(input_file) = self.input_file {
             let input_file = if input_file.is_relative() {
                 let crate_root = get_crate_root().unwrap();
@@ -62,8 +61,7 @@ impl<'a, 'b> Generator<'a, 'b> {
             self.schema.as_ref().unwrap(),
         );
         let token_stream = expander.expand(self.schema.as_ref().unwrap());
-        self.expander = Some(expander);
-        token_stream
+        (token_stream, expander)
     }
 
     pub fn generate_to_file<P: ?Sized + AsRef<Path>>(
@@ -71,7 +69,7 @@ impl<'a, 'b> Generator<'a, 'b> {
         output_file: &'b P,
     ) -> io::Result<()> {
         use std::process::Command;
-        let tokens = self.generate();
+        let (tokens, _) = self.generate();
         let out = tokens.to_string();
         std::fs::write(output_file, &out)?;
         Command::new("rustfmt")
@@ -93,9 +91,8 @@ impl<'a, 'b> Default for GeneratorBuilder<'a, 'b> {
             inner: Generator {
                 root_name: None,
                 schemafy_path: "::schemafy_core::",
-                input_file: Some(Path::new("schema.json")),
+                input_file: None,
                 input_json: None,
-                expander: None,
                 schema: None,
             },
         }

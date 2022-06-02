@@ -82,6 +82,7 @@ pub fn schemafy(tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
         .with_input_file(&input_file)
         .build()
         .generate()
+        .0
         .into()
 }
 
